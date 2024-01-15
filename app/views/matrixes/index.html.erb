@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    .form-outline1 {
+      text-align: left;
+    }
+
+    .form-outline2 {
+      text-align: right;
+    }
+
+    .form-row1,
+    .form-row2 {
+      display: flex;
+    }
+
+    .main {
+      border: 1px solid black;
+    }
+
+    .table {
+      border: 1px solid black;
+      height: 1000px;
+      width: 700px;
+      margin: 50px 100px 50px 100px;
+      padding: 20px 50px 20px 50px;
+      background-color: rgb(228, 229, 229);
+    }
+    .second-matrix {
+      margin-top: 20px;
+    }
+    .aaaa{
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+<div class='main'>
+  <div class='table'>
+    <div class='first-section'>
+      <div>
+        <h3>Select the matrix size:</h3>
+      </div>
+
+      <div class="form-row1">
+        <div class="form-outline1">
+          <label class="form-label" for="typeNumberColsA">A:</label>
+          <input type="number" id="typeNumberColsA" class="form-control" />
+        </div>
+
+        <div class="form-outline2">
+          <label class="form-label" for="typeNumberRowsA">×</label>
+          <input type="number" id="typeNumberRowsA" class="form-control" />
+        </div>
+      </div>
+
+      <div class="form-row2">
+        <div class="form-outline1">
+          <label class="form-label" for="typeNumberColsB">B:</label>
+          <input type="number" id="typeNumberColsB" class="form-control" />
+        </div>
+
+        <div class="form-outline2">
+          <label class="form-label" for="typeNumberRowsB">×</label>
+          <input type="number" id="typeNumberRowsB" class="form-control" />
+        </div>
+      </div>
+    </div>
+
+    <div class='second-section'>
+      <div class='first-matrix'>
+        <h3>The first matrix:</h3>
+        <div class='aaaa'>
+          <div>A =</div>
+          <div id="matrixA"></div>
+        </div>
+      </div>
+      <div class='second-matrix'>
+        <h3>The second matrix:</h3>
+        <div class='aaaa'>
+          <div>B =</div>
+          <div id="matrixB"></div>
+        </div>
+      </div>
+    </div>
+    <button id="multiplyButton">Multiply Matrices</button>
+
+    <div class='output-section'>
+      <h3>Result Matrix:</h3>
+      <div id="resultMatrix"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function createMatrix(containerId, rows, cols) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'form-control';
+        container.appendChild(input);
+      }
+
+      const breakLine = document.createElement('br');
+      container.appendChild(breakLine);
+    }
+  }
+
+  async function multiplyMatrices() {
+    const colsA = document.getElementById('typeNumberColsA').value || 0;
+    const rowsA = document.getElementById('typeNumberRowsA').value || 0;
+    const colsB = document.getElementById('typeNumberColsB').value || 0;
+    const rowsB = document.getElementById('typeNumberRowsB').value || 0;
+
+    if (colsA !== rowsB) {
+      alert('Matrix multiplication is not possible. Columns of A must be equal to rows of B.');
+      return;
+    }
+
+    const matrixA = getMatrixData('matrixA', rowsA, colsA);
+    const matrixB = getMatrixData('matrixB', rowsB, colsB);
+
+    const response = await fetch('/multiply_matrices', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        matrix_a: matrixA,
+        matrix_b: matrixB,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      displayResultMatrix(result.result);
+    } else {
+      alert('Error multiplying matrices. Please check your input.');
+    }
+  }
+
+  document.getElementById('typeNumberColsA').addEventListener('input', function () {
+    const colsA = this.value || 0;
+    const rowsA = document.getElementById('typeNumberRowsA').value || 0;
+    createMatrix('matrixA', rowsA, colsA);
+  });
+
+  document.getElementById('typeNumberRowsA').addEventListener('input', function () {
+    const colsA = document.getElementById('typeNumberColsA').value || 0;
+    const rowsA = this.value || 0;
+    createMatrix('matrixA', rowsA, colsA);
+  });
+
+  document.getElementById('typeNumberColsB').addEventListener('input', function () {
+    const colsB = this.value || 0;
+    const rowsB = document.getElementById('typeNumberRowsB').value || 0;
+    createMatrix('matrixB', rowsB, colsB);
+  });
+
+  document.getElementById('typeNumberRowsB').addEventListener('input', function () {
+    const colsB = document.getElementById('typeNumberColsB').value || 0;
+    const rowsB = this.value || 0;
+    createMatrix('matrixB', rowsB, colsB);
+  });
+
+  function getMatrixData(containerId, rows, cols) {
+    const matrixData = [];
+    const container = document.getElementById(containerId);
+
+    for (let i = 0; i < rows; i++) {
+      const row = [];
+      for (let j = 0; j < cols; j++) {
+        const input = container.children[i * cols + j];
+        row.push(parseFloat(input.value) || 0);
+      }
+      matrixData.push(row);
+    }
+
+    return matrixData;
+  }
+  function displayResultMatrix(resultMatrix) {
+    const resultContainer = document.getElementById('resultMatrix');
+    resultContainer.innerHTML = '';
+
+    resultMatrix.forEach(row => {
+      const rowDiv = document.createElement('div');
+      rowDiv.textContent = row.join(' ');
+      resultContainer.appendChild(rowDiv);
+    });
+  }
+  document.getElementById('multiplyButton').addEventListener('click', multiplyMatrices);
+</script>
+
+</body>
+</html>
